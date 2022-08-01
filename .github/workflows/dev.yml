@@ -12,6 +12,9 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run-dev-build') }}
     name: Prepare build
     runs-on: [ "ubuntu-20.04" ]
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       version_main: ${{ steps.version_main.outputs.version_main }}
       version_dev: ${{ steps.version_dev.outputs.version_dev }}${{ steps.version_pr.outputs.version_pr }}
@@ -32,7 +35,7 @@ jobs:
           version_pr=$(printf "%05d" ${{ github.event.pull_request.number }})
           echo "Development build for PR #${{ github.event.pull_request.number }}"
           echo "::set-output name=version_pr::${version_pr}"
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Get Major/Minor version
         id: version_main
         run: |
@@ -40,7 +43,7 @@ jobs:
           build=$(cat ${GITHUB_WORKSPACE}/buildroot-external/meta | grep VERSION_BUILD | cut -d'=' -f2)
           echo "::set-output name=version_main::${major}.${build}"
       - name: Create build matrix
-        uses: actions/github-script@v4
+        uses: actions/github-script@v6
         id: generate_matrix
         with:
           script: |
@@ -69,7 +72,7 @@ jobs:
 
     steps:
       - name: Define git reference
-        uses: actions/github-script@v4
+        uses: actions/github-script@v6
         id: generate_gitref
         with:
           script: |
@@ -78,7 +81,7 @@ jobs:
             return { "ref": context.payload.pull_request.head.sha }
 
       - name: Checkout source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
           persist-credentials: false
@@ -106,7 +109,7 @@ jobs:
             haos-builder make BUILDDIR=/build VERSION_DEV=${{ needs.prepare.outputs.version_dev }} ${{ matrix.board.defconfig }}
 
       - name: Upload images
-        uses: burnett01/rsync-deployments@4.1
+        uses: burnett01/rsync-deployments@5.2
         with:
           rsh: -q
           switches: -aW

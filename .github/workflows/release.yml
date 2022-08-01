@@ -15,7 +15,7 @@ jobs:
       version_dev: ${{ steps.version_check.outputs.version_dev }}
       matrix: ${{ steps.generate_matrix.outputs.result }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Validate version
         id: version_check
         run: |
@@ -36,7 +36,7 @@ jobs:
           fi
           echo "::set-output name=version_dev::${tag_dev}"
       - name: Create build matrix
-        uses: actions/github-script@v4
+        uses: actions/github-script@v6
         id: generate_matrix
         with:
           script: |
@@ -44,6 +44,8 @@ jobs:
             return { "board": boards }
 
   build:
+    permissions:
+      contents: write  # for actions/upload-release-asset to upload release asset
     name: Release build for ${{ matrix.board.id }}
     needs: validate_release
     strategy:
@@ -52,7 +54,7 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: true
 
